@@ -1,4 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useSyncExternalStore } from 'react';
+
+function useIsMobile() {
+  return useSyncExternalStore(
+    (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb); },
+    () => window.innerWidth < 768,
+  );
+}
 import { DEMO_NOTES } from './data.js';
 import { getAllNotes, putNote, removeNote } from './db.js';
 import Editor from './components/Editor.jsx';
@@ -39,6 +46,7 @@ const selectStyle = {
 const ADMIN_PASSWORD = 'J79038078w';
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [notes, setNotes] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [activeId, setActiveId] = useState(null);
@@ -163,7 +171,7 @@ export default function App() {
 
         {/* ── Header ── */}
         <div style={{
-          padding: '18px 32px',
+          padding: isMobile ? '14px 16px' : '18px 32px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -202,8 +210,8 @@ export default function App() {
         </div>
 
         {/* ── Filters ── */}
-        <div style={{ padding: '20px 32px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 14 }}>
+        <div style={{ padding: isMobile ? '14px 16px' : '20px 32px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom: 14 }}>
             {[
               { label: 'Category', val: fCategory, set: setFCategory, opts: categories, ph: 'All' },
               { label: 'Subject',  val: fSubject,  set: setFSubject,  opts: subjects,   ph: 'All' },
@@ -239,8 +247,8 @@ export default function App() {
         </div>
 
         {/* ── Table ── */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: isMobile ? 'auto' : 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: isMobile ? 560 : 'unset' }}>
             <colgroup>
               <col style={{ width: '28%' }} />
               <col style={{ width: '14%' }} />
@@ -300,6 +308,7 @@ export default function App() {
           top: 0,
           right: 0,
           bottom: 0,
+          left: isMobile ? 0 : 'auto',
           zIndex: 40,
           display: 'flex',
           boxShadow: '-8px 0 40px rgba(0,0,0,0.4)',
@@ -311,6 +320,7 @@ export default function App() {
             onDelete={deleteNote}
             onClose={() => setActiveId(null)}
             isAdmin={isAdmin}
+            isMobile={isMobile}
           />
         </div>
       )}

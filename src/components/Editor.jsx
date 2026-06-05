@@ -13,7 +13,7 @@ const C = {
 
 const DOC_TYPES = ['Notes/Practices', 'Lecture Notes', 'Exam Papers', 'Tutorials', 'Cheatsheet', 'Other'];
 
-export default function Editor({ note, notes, onChange, onDelete, onClose, isAdmin }) {
+export default function Editor({ note, notes, onChange, onDelete, onClose, isAdmin, isMobile }) {
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   useEffect(() => {
@@ -44,8 +44,8 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
 
   return (
     <div style={{
-      width: note.isPdf && pdfBlobUrl ? 720 : 420,
-      minWidth: note.isPdf && pdfBlobUrl ? 720 : 420,
+      width: isMobile ? '100vw' : (note.isPdf && pdfBlobUrl ? 720 : 420),
+      minWidth: isMobile ? '100vw' : (note.isPdf && pdfBlobUrl ? 720 : 420),
       background: C.surface,
       borderLeft: `1px solid ${C.border}`,
       display: 'flex',
