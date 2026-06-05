@@ -36,11 +36,23 @@ const selectStyle = {
   width: '100%',
 };
 
+const ADMIN_PASSWORD = 'J79038078w';
+
 export default function App() {
   const [notes, setNotes] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [activeId, setActiveId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  function toggleAdmin() {
+    if (isAdmin) {
+      setIsAdmin(false);
+    } else {
+      const pw = window.prompt('Enter password:');
+      if (pw === ADMIN_PASSWORD) setIsAdmin(true);
+    }
+  }
 
   const [fCategory, setFCategory] = useState('All');
   const [fSubject, setFSubject] = useState('All');
@@ -161,21 +173,30 @@ export default function App() {
           <span style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: "'Playfair Display', serif" }}>
             Library
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {isAdmin && (
+              <button
+                onClick={() => setShowModal(true)}
+                style={{
+                  padding: '8px 18px',
+                  border: `1px solid ${C.amber}`,
+                  borderRadius: 6,
+                  background: 'transparent',
+                  color: C.amber,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                + Add Document
+              </button>
+            )}
             <button
-              onClick={() => setShowModal(true)}
-              style={{
-                padding: '8px 18px',
-                border: `1px solid ${C.amber}`,
-                borderRadius: 6,
-                background: 'transparent',
-                color: C.amber,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              onClick={toggleAdmin}
+              title={isAdmin ? 'Lock (exit admin)' : 'Unlock admin'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, opacity: isAdmin ? 1 : 0.4, padding: 4 }}
             >
-              + Add Document
+              {isAdmin ? '🔓' : '🔒'}
             </button>
           </div>
         </div>
@@ -289,6 +310,7 @@ export default function App() {
             onChange={updateNote}
             onDelete={deleteNote}
             onClose={() => setActiveId(null)}
+            isAdmin={isAdmin}
           />
         </div>
       )}

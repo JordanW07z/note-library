@@ -13,7 +13,7 @@ const C = {
 
 const DOC_TYPES = ['Notes/Practices', 'Lecture Notes', 'Exam Papers', 'Tutorials', 'Cheatsheet', 'Other'];
 
-export default function Editor({ note, notes, onChange, onDelete, onClose }) {
+export default function Editor({ note, notes, onChange, onDelete, onClose, isAdmin }) {
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   useEffect(() => {
@@ -62,22 +62,26 @@ export default function Editor({ note, notes, onChange, onDelete, onClose }) {
         gap: 8,
         flexShrink: 0,
       }}>
-        <button
-          onClick={() => onChange('pinned', !note.pinned)}
-          title={note.pinned ? 'Unpin' : 'Pin'}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, opacity: note.pinned ? 1 : 0.3, padding: 4 }}
-        >
-          📌
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => onChange('pinned', !note.pinned)}
+            title={note.pinned ? 'Unpin' : 'Pin'}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, opacity: note.pinned ? 1 : 0.3, padding: 4 }}
+          >
+            📌
+          </button>
+        )}
         <span style={{ fontSize: 12, color: C.muted, flex: 1 }}>
           {note.isPdf ? '📄 PDF Document' : '📝 Note'}
         </span>
-        <button
-          onClick={() => { if (window.confirm('Delete this document?')) onDelete(note.id); }}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, padding: 4, color: C.danger }}
-        >
-          🗑
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => { if (window.confirm('Delete this document?')) onDelete(note.id); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, padding: 4, color: C.danger }}
+          >
+            🗑
+          </button>
+        )}
         <button
           onClick={onClose}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, color: C.muted, padding: 4 }}
@@ -89,7 +93,8 @@ export default function Editor({ note, notes, onChange, onDelete, onClose }) {
       {/* Title */}
       <input
         value={note.title}
-        onChange={(e) => onChange('title', e.target.value)}
+        onChange={(e) => isAdmin && onChange('title', e.target.value)}
+        readOnly={!isAdmin}
         placeholder="Document title…"
         style={{
           border: 'none',
@@ -103,6 +108,7 @@ export default function Editor({ note, notes, onChange, onDelete, onClose }) {
           width: '100%',
           boxSizing: 'border-box',
           flexShrink: 0,
+          cursor: isAdmin ? 'text' : 'default',
         }}
       />
 
@@ -117,19 +123,19 @@ export default function Editor({ note, notes, onChange, onDelete, onClose }) {
       }}>
         <div>
           <p style={labelStyle}>Category</p>
-          <input value={note.module || ''} onChange={(e) => onChange('module', e.target.value)} placeholder="Category" style={inputStyle} />
+          <input value={note.module || ''} onChange={(e) => isAdmin && onChange('module', e.target.value)} readOnly={!isAdmin} placeholder="Category" style={{ ...inputStyle, cursor: isAdmin ? 'text' : 'default' }} />
         </div>
         <div>
           <p style={labelStyle}>Subject</p>
-          <input value={note.subject || ''} onChange={(e) => onChange('subject', e.target.value)} placeholder="Subject" style={inputStyle} />
+          <input value={note.subject || ''} onChange={(e) => isAdmin && onChange('subject', e.target.value)} readOnly={!isAdmin} placeholder="Subject" style={{ ...inputStyle, cursor: isAdmin ? 'text' : 'default' }} />
         </div>
         <div>
           <p style={labelStyle}>Year</p>
-          <input value={note.year || ''} onChange={(e) => onChange('year', e.target.value)} placeholder="Year" style={inputStyle} />
+          <input value={note.year || ''} onChange={(e) => isAdmin && onChange('year', e.target.value)} readOnly={!isAdmin} placeholder="Year" style={{ ...inputStyle, cursor: isAdmin ? 'text' : 'default' }} />
         </div>
         <div>
           <p style={labelStyle}>Document Type</p>
-          <select value={note.documentType || ''} onChange={(e) => onChange('documentType', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+          <select value={note.documentType || ''} onChange={(e) => isAdmin && onChange('documentType', e.target.value)} disabled={!isAdmin} style={{ ...inputStyle, cursor: isAdmin ? 'pointer' : 'default' }}>
             <option value="">—</option>
             {DOC_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -146,7 +152,8 @@ export default function Editor({ note, notes, onChange, onDelete, onClose }) {
       ) : (
         <textarea
           value={note.body}
-          onChange={(e) => onChange('body', e.target.value)}
+          onChange={(e) => isAdmin && onChange('body', e.target.value)}
+          readOnly={!isAdmin}
           placeholder="Start writing…"
           style={{
             flex: 1,
@@ -160,6 +167,7 @@ export default function Editor({ note, notes, onChange, onDelete, onClose }) {
             fontFamily: 'inherit',
             background: 'transparent',
             minHeight: 0,
+            cursor: isAdmin ? 'text' : 'default',
           }}
         />
       )}
