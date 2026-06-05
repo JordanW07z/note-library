@@ -135,10 +135,14 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
         </div>
         <div>
           <p style={labelStyle}>Document Type</p>
-          <select value={note.documentType || ''} onChange={(e) => isAdmin && onChange('documentType', e.target.value)} disabled={!isAdmin} style={{ ...inputStyle, cursor: isAdmin ? 'pointer' : 'default' }}>
-            <option value="">—</option>
-            {DOC_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          {isAdmin ? (
+            <select value={note.documentType || ''} onChange={(e) => onChange('documentType', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+              <option value="">—</option>
+              {DOC_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          ) : (
+            <p style={{ ...inputStyle, border: 'none', background: 'transparent', padding: '5px 0', margin: 0 }}>{note.documentType || '—'}</p>
+          )}
         </div>
       </div>
 
