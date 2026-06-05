@@ -213,10 +213,10 @@ export default function App() {
         <div style={{ padding: isMobile ? '14px 16px' : '20px 32px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom: 14 }}>
             {[
-              { label: 'Category', val: fCategory, set: setFCategory, opts: categories, ph: 'eg. A Levels' },
-              { label: 'Subject',  val: fSubject,  set: setFSubject,  opts: subjects,   ph: 'eg. H2 Math' },
-              { label: 'Year',     val: fYear,     set: setFYear,     opts: years,      ph: 'eg. 2026' },
-              { label: 'Document Type', val: fType, set: setFType,    opts: types,      ph: 'eg. Exam Papers' },
+              { label: 'Category', val: fCategory, set: setFCategory, opts: categories, ph: 'All' },
+              { label: 'Subject',  val: fSubject,  set: setFSubject,  opts: subjects,   ph: 'All' },
+              { label: 'Year',     val: fYear,     set: setFYear,     opts: years,      ph: 'All' },
+              { label: 'Document Type', val: fType, set: setFType,    opts: types,      ph: 'All' },
             ].map(({ label, val, set, opts, ph }) => (
               <div key={label}>
                 <p style={{ fontSize: 12, color: C.text, marginBottom: 6, fontWeight: 500 }}>{label}</p>
@@ -235,7 +235,7 @@ export default function App() {
             <input
               value={fName}
               onChange={(e) => setFName(e.target.value)}
-              placeholder={isMobile ? 'eg. NYJC Math' : 'Document name…'}
+              placeholder="Document name…"
               style={{
                 ...selectStyle,
                 width: '100%',
