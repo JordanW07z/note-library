@@ -148,8 +148,9 @@ export default function App() {
   }
 
   function deleteNote(id) {
+    const note = notes.find((n) => n.id === id);
     setNotes((prev) => prev.filter((n) => n.id !== id));
-    removeNote(id);
+    removeNote(id, note?.pdfPath);
     setActiveId(null);
   }
 

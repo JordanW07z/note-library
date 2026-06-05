@@ -57,9 +57,12 @@ export async function putNote(note) {
   if (error) throw error;
 }
 
-export async function removeNote(id) {
+export async function removeNote(id, pdfPath) {
   const { error } = await supabase.from('notes').delete().eq('id', id);
   if (error) throw error;
+  if (pdfPath) {
+    await supabase.storage.from('pdfs').remove([pdfPath]);
+  }
 }
 
 // Upload a PDF and return its storage path
