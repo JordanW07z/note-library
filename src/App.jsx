@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useSyncExternalStore } from 'react';
+import { getAllNotes, putNote, removeNote, uploadPdf, getPdfUrl } from './db.js';
 
 function useIsMobile() {
   return useSyncExternalStore(
@@ -6,8 +7,6 @@ function useIsMobile() {
     () => window.innerWidth < 768,
   );
 }
-import { DEMO_NOTES } from './data.js';
-import { getAllNotes, putNote, removeNote } from './db.js';
 import Editor from './components/Editor.jsx';
 import NoteModal from './components/PdfModal.jsx';
 
@@ -68,15 +67,13 @@ export default function App() {
   const [fType, setFType] = useState('All');
   const [fName, setFName] = useState('');
 
-  // ── Load from IndexedDB ──────────────────────────────────────────────────
+  // ── Load from Supabase ───────────────────────────────────────────────────
   useEffect(() => {
     getAllNotes().then((saved) => {
-      if (saved.length > 0) {
-        setNotes(saved);
-      } else {
-        setNotes(DEMO_NOTES);
-        DEMO_NOTES.forEach((n) => putNote(n));
-      }
+      setNotes(saved);
+      setLoaded(true);
+    }).catch((err) => {
+      console.error('Failed to load notes:', err);
       setLoaded(true);
     });
   }, []);
@@ -114,24 +111,30 @@ export default function App() {
     );
   }, [activeId]);
 
-  function createNote({ title, body, module, subject, year, documentType, uploadedBy, tags, isPdf, pdfArrayBuffer }) {
+  async function createNote({ title, body, module, subject, year, documentType, uploadedBy, tags, isPdf, pdfArrayBuffer }) {
+    const id = uid();
+    let pdfPath = null;
+    if (isPdf && pdfArrayBuffer) {
+      pdfPath = await uploadPdf(id, pdfArrayBuffer);
+    }
     const n = {
-      id: uid(),
+      id,
       title,
       body,
       module,
       subject,
       year,
       documentType,
-      uploadedBy: uploadedBy || 'me',
+      uploadedBy: uploadedBy || 'anon',
       tags,
       pinned: false,
       created: new Date().toISOString().slice(0, 10),
       isPdf,
+      pdfPath,
       pdfArrayBuffer: pdfArrayBuffer ?? null,
     };
     setNotes((prev) => [n, ...prev]);
-    putNote(n);
+    await putNote(n);
     setActiveId(n.id);
     setShowModal(false);
   }
@@ -142,16 +145,24 @@ export default function App() {
     setActiveId(null);
   }
 
-  function downloadNote(note, e) {
+  async function downloadNote(note, e) {
     e.stopPropagation();
-    if (!note.pdfArrayBuffer) return;
-    const blob = new Blob([note.pdfArrayBuffer], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${note.title}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // Use in-memory buffer if available (just uploaded), otherwise fetch from storage
+    if (note.pdfArrayBuffer) {
+      const blob = new Blob([note.pdfArrayBuffer], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${note.title}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (note.pdfPath) {
+      const url = await getPdfUrl(note.pdfPath);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${note.title}.pdf`;
+      a.click();
+    }
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -377,7 +388,7 @@ function TableRow({ note, active, onOpen, onDownload }) {
       <Cell>{note.year || new Date(note.created).getFullYear()}</Cell>
       <Cell>{formatDate(note.created)}</Cell>
       <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-        {note.isPdf && note.pdfArrayBuffer ? (
+        {note.isPdf && (note.pdfArrayBuffer || note.pdfPath) ? (
           <button
             onClick={onDownload}
             title="Download PDF"
@@ -433,7 +444,7 @@ function NoteCard({ note, active, onOpen, onDownload }) {
           </div>
         ))}
       </div>
-      {note.isPdf && note.pdfArrayBuffer && (
+      {note.isPdf && (note.pdfArrayBuffer || note.pdfPath) && (
         <button
           onClick={onDownload}
           style={{

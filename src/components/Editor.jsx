@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getPdfUrl } from '../db.js';
 
 const C = {
   bg: '#080E1C',
@@ -17,14 +18,19 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   useEffect(() => {
-    if (note.isPdf && note.pdfArrayBuffer) {
+    if (!note.isPdf) { setPdfBlobUrl(null); return; }
+    if (note.pdfArrayBuffer) {
       const blob = new Blob([note.pdfArrayBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       setPdfBlobUrl(url);
       return () => URL.revokeObjectURL(url);
     }
-    setPdfBlobUrl(null);
-  }, [note.id, note.pdfArrayBuffer]);
+    if (note.pdfPath) {
+      getPdfUrl(note.pdfPath).then(setPdfBlobUrl).catch(() => setPdfBlobUrl(null));
+    } else {
+      setPdfBlobUrl(null);
+    }
+  }, [note.id, note.pdfArrayBuffer, note.pdfPath]);
 
   const categories = [...new Set(notes.map((n) => n.module).filter(Boolean))];
 
