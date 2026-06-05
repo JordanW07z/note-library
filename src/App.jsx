@@ -211,12 +211,12 @@ export default function App() {
 
         {/* ── Filters ── */}
         <div style={{ padding: isMobile ? '14px 16px' : '20px 32px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom: 14 }}>
             {[
-              { label: 'Category', val: fCategory, set: setFCategory, opts: categories, ph: 'All' },
-              { label: 'Subject',  val: fSubject,  set: setFSubject,  opts: subjects,   ph: 'All' },
-              { label: 'Year',     val: fYear,     set: setFYear,     opts: years,      ph: 'All' },
-              { label: 'Document Type', val: fType, set: setFType,    opts: types,      ph: 'All' },
+              { label: 'Category', val: fCategory, set: setFCategory, opts: categories, ph: 'eg. A Levels' },
+              { label: 'Subject',  val: fSubject,  set: setFSubject,  opts: subjects,   ph: 'eg. H2 Math' },
+              { label: 'Year',     val: fYear,     set: setFYear,     opts: years,      ph: 'eg. 2026' },
+              { label: 'Document Type', val: fType, set: setFType,    opts: types,      ph: 'eg. Exam Papers' },
             ].map(({ label, val, set, opts, ph }) => (
               <div key={label}>
                 <p style={{ fontSize: 12, color: C.text, marginBottom: 6, fontWeight: 500 }}>{label}</p>
@@ -235,7 +235,7 @@ export default function App() {
             <input
               value={fName}
               onChange={(e) => setFName(e.target.value)}
-              placeholder="Document name…"
+              placeholder={isMobile ? 'eg. NYJC Math' : 'Document name…'}
               style={{
                 ...selectStyle,
                 width: '100%',
@@ -246,48 +246,15 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Table ── */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: isMobile ? 'auto' : 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: isMobile ? 560 : 'unset' }}>
-            <colgroup>
-              <col style={{ width: '28%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '8%' }} />
-            </colgroup>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                {['Document Name', 'Category', 'Subject', 'Type', 'Year', 'Uploaded On', 'Download'].map((col) => (
-                  <th key={col} style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: C.text,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    position: 'sticky',
-                    top: 0,
-                    background: C.bg,
-                  }}>
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+        {/* ── Table / Cards ── */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {isMobile ? (
+            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 14 }}>
-                    No documents found
-                  </td>
-                </tr>
+                <p style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 14 }}>No documents found</p>
               ) : (
                 filtered.map((note) => (
-                  <TableRow
+                  <NoteCard
                     key={note.id}
                     note={note}
                     active={activeId === note.id}
@@ -296,8 +263,59 @@ export default function App() {
                   />
                 ))
               )}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '28%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                  {['Document Name', 'Category', 'Subject', 'Type', 'Year', 'Uploaded On', 'Download'].map((col) => (
+                    <th key={col} style={{
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: C.text,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      position: 'sticky',
+                      top: 0,
+                      background: C.bg,
+                    }}>
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 14 }}>
+                      No documents found
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((note) => (
+                    <TableRow
+                      key={note.id}
+                      note={note}
+                      active={activeId === note.id}
+                      onOpen={() => setActiveId(note.id)}
+                      onDownload={(e) => downloadNote(note, e)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
@@ -380,5 +398,59 @@ function Cell({ children }) {
     <td style={{ padding: '14px 16px', fontSize: 13, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {children}
     </td>
+  );
+}
+
+function NoteCard({ note, active, onOpen, onDownload }) {
+  return (
+    <div
+      onClick={onOpen}
+      style={{
+        background: active ? C.amberDim : C.surface,
+        border: `1px solid ${active ? C.amber : C.border}`,
+        borderRadius: 12,
+        padding: '16px',
+        cursor: 'pointer',
+      }}
+    >
+      <p style={{ fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Document Name</p>
+      <p style={{ fontSize: 15, fontWeight: 600, color: C.amber, marginBottom: 14 }}>
+        {note.pinned && <span style={{ marginRight: 6, fontSize: 11 }}>📌</span>}
+        {note.title}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px', marginBottom: 14 }}>
+        {[
+          { label: 'Category', value: note.module || '—' },
+          { label: 'Subject', value: note.subject || note.tags?.[0] || '—' },
+          { label: 'Type', value: note.documentType || '—' },
+          { label: 'Year', value: note.year || new Date(note.created).getFullYear() },
+          { label: 'Uploaded By', value: note.uploadedBy || '—' },
+          { label: 'Uploaded On', value: formatDate(note.created) },
+        ].map(({ label, value }) => (
+          <div key={label}>
+            <p style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>{label}</p>
+            <p style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{value}</p>
+          </div>
+        ))}
+      </div>
+      {note.isPdf && note.pdfArrayBuffer && (
+        <button
+          onClick={onDownload}
+          style={{
+            width: '100%',
+            padding: '10px',
+            border: `1px solid ${C.amber}`,
+            borderRadius: 8,
+            background: 'transparent',
+            color: C.amber,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Download
+        </button>
+      )}
+    </div>
   );
 }
