@@ -73,7 +73,10 @@ export default function App() {
       setNotes(saved);
       setLoaded(true);
     }).catch((err) => {
-      console.error('Failed to load notes:', err);
+      console.error('Supabase error message:', err?.message);
+      console.error('Supabase error code:', err?.code);
+      console.error('Supabase error details:', err?.details);
+      console.error('Supabase error hint:', err?.hint);
       setLoaded(true);
     });
   }, []);
@@ -113,30 +116,35 @@ export default function App() {
 
   async function createNote({ title, body, module, subject, year, documentType, uploadedBy, tags, isPdf, pdfArrayBuffer }) {
     const id = uid();
-    let pdfPath = null;
-    if (isPdf && pdfArrayBuffer) {
-      pdfPath = await uploadPdf(id, pdfArrayBuffer);
+    try {
+      let pdfPath = null;
+      if (isPdf && pdfArrayBuffer) {
+        pdfPath = await uploadPdf(id, pdfArrayBuffer);
+      }
+      const n = {
+        id,
+        title,
+        body,
+        module,
+        subject,
+        year,
+        documentType,
+        uploadedBy: uploadedBy || 'anon',
+        tags,
+        pinned: false,
+        created: new Date().toISOString().slice(0, 10),
+        isPdf,
+        pdfPath,
+        pdfArrayBuffer: pdfArrayBuffer ?? null,
+      };
+      await putNote(n);
+      setNotes((prev) => [n, ...prev]);
+      setActiveId(n.id);
+      setShowModal(false);
+    } catch (err) {
+      console.error('createNote error:', err?.message, err?.code, err?.details);
+      alert(`Failed to save: ${err?.message ?? 'Unknown error'}`);
     }
-    const n = {
-      id,
-      title,
-      body,
-      module,
-      subject,
-      year,
-      documentType,
-      uploadedBy: uploadedBy || 'anon',
-      tags,
-      pinned: false,
-      created: new Date().toISOString().slice(0, 10),
-      isPdf,
-      pdfPath,
-      pdfArrayBuffer: pdfArrayBuffer ?? null,
-    };
-    setNotes((prev) => [n, ...prev]);
-    await putNote(n);
-    setActiveId(n.id);
-    setShowModal(false);
   }
 
   function deleteNote(id) {
