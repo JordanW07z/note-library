@@ -141,7 +141,7 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
               {DOC_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           ) : (
-            <p style={{ ...inputStyle, border: 'none', background: 'transparent', padding: '5px 0', margin: 0 }}>{note.documentType || '—'}</p>
+            <p style={{ ...inputStyle, margin: 0, cursor: 'default' }}>{note.documentType || '—'}</p>
           )}
         </div>
       </div>
