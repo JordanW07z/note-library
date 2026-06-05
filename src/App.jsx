@@ -443,7 +443,6 @@ function NoteCard({ note, active, onOpen, onDownload }) {
           { label: 'Subject', value: note.subject || note.tags?.[0] || '—' },
           { label: 'Type', value: note.documentType || '—' },
           { label: 'Year', value: note.year || new Date(note.created).getFullYear() },
-          { label: 'Uploaded By', value: note.uploadedBy || '—' },
           { label: 'Uploaded On', value: formatDate(note.created) },
         ].map(({ label, value }) => (
           <div key={label}>
