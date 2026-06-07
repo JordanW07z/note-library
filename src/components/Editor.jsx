@@ -35,12 +35,13 @@ function MobilePdfViewer({ blobUrl }) {
       .then(async (pdf) => {
       const rendered = [];
       const containerWidth = containerRef.current?.offsetWidth || window.innerWidth - 32;
+      const dpr = window.devicePixelRatio || 1;
 
       for (let i = 1; i <= pdf.numPages; i++) {
         if (cancelled) break;
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 1 });
-        const scale = containerWidth / viewport.width;
+        const scale = (containerWidth / viewport.width) * dpr;
         const scaled = page.getViewport({ scale });
 
         const canvas = document.createElement('canvas');
@@ -48,7 +49,7 @@ function MobilePdfViewer({ blobUrl }) {
         canvas.height = scaled.height;
         const ctx = canvas.getContext('2d');
         await page.render({ canvasContext: ctx, viewport: scaled }).promise;
-        if (!cancelled) rendered.push({ dataUrl: canvas.toDataURL(), height: scaled.height });
+        if (!cancelled) rendered.push({ dataUrl: canvas.toDataURL('image/jpeg', 0.92), cssWidth: containerWidth, cssHeight: scaled.height / dpr });
       }
 
       if (!cancelled) {
@@ -67,7 +68,13 @@ function MobilePdfViewer({ blobUrl }) {
       )}
       {pages.map((p, i) => (
         <div key={i} style={{ borderRadius: 6, overflow: 'hidden', border: `1px solid ${C.border}` }}>
-          <img src={p.dataUrl} alt={`Page ${i + 1}`} style={{ width: '100%', display: 'block' }} />
+          <img
+            src={p.dataUrl}
+            alt={`Page ${i + 1}`}
+            width={p.cssWidth}
+            height={p.cssHeight}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
         </div>
       ))}
     </div>
