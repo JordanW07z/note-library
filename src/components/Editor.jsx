@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getPdfUrl } from '../db.js';
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 const C = {
   bg: '#080E1C',
@@ -13,6 +19,59 @@ const C = {
 };
 
 const DOC_TYPES = ['Notes/Practices', 'Lecture Notes', 'Exam Papers', 'Tutorials', 'Cheatsheet', 'Other'];
+
+function MobilePdfViewer({ blobUrl }) {
+  const [pages, setPages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!blobUrl) return;
+    setLoading(true);
+    setPages([]);
+
+    let cancelled = false;
+    pdfjsLib.getDocument(blobUrl).promise.then(async (pdf) => {
+      const rendered = [];
+      const containerWidth = containerRef.current?.offsetWidth || window.innerWidth - 32;
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        if (cancelled) break;
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = containerWidth / viewport.width;
+        const scaled = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = scaled.width;
+        canvas.height = scaled.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport: scaled }).promise;
+        if (!cancelled) rendered.push({ dataUrl: canvas.toDataURL(), height: scaled.height });
+      }
+
+      if (!cancelled) {
+        setPages(rendered);
+        setLoading(false);
+      }
+    }).catch(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [blobUrl]);
+
+  return (
+    <div ref={containerRef} style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {loading && (
+        <p style={{ textAlign: 'center', color: C.muted, fontSize: 13, padding: '40px 0' }}>Loading pages…</p>
+      )}
+      {pages.map((p, i) => (
+        <div key={i} style={{ borderRadius: 6, overflow: 'hidden', border: `1px solid ${C.border}` }}>
+          <img src={p.dataUrl} alt={`Page ${i + 1}`} style={{ width: '100%', display: 'block' }} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Editor({ note, notes, onChange, onDelete, onClose, isAdmin, isMobile }) {
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
@@ -31,8 +90,6 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
       setPdfBlobUrl(null);
     }
   }, [note.id, note.pdfArrayBuffer, note.pdfPath]);
-
-  const categories = [...new Set(notes.map((n) => n.module).filter(Boolean))];
 
   const inputStyle = {
     background: C.surfaceHigh,
@@ -56,7 +113,8 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
       borderLeft: `1px solid ${C.border}`,
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',
+      height: isMobile ? '100vh' : '100%',
+      overflowY: isMobile ? 'auto' : 'hidden',
       transition: 'width 0.2s',
     }}>
       {/* Header */}
@@ -67,6 +125,10 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
         alignItems: 'center',
         gap: 8,
         flexShrink: 0,
+        position: 'sticky',
+        top: 0,
+        background: C.surface,
+        zIndex: 1,
       }}>
         {isAdmin && (
           <button
@@ -154,11 +216,15 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
 
       {/* Body / PDF viewer */}
       {note.isPdf && pdfBlobUrl ? (
-        <iframe
-          src={pdfBlobUrl}
-          title={note.title}
-          style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }}
-        />
+        isMobile ? (
+          <MobilePdfViewer blobUrl={pdfBlobUrl} />
+        ) : (
+          <iframe
+            src={pdfBlobUrl}
+            title={note.title}
+            style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }}
+          />
+        )
       ) : (
         <textarea
           value={note.body}
