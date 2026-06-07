@@ -51,6 +51,7 @@ export default function App() {
   const [activeId, setActiveId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mobilePage, setMobilePage] = useState(0);
 
   function toggleAdmin() {
     if (isAdmin) {
@@ -66,6 +67,8 @@ export default function App() {
   const [fYear, setFYear] = useState('All');
   const [fType, setFType] = useState('All');
   const [fName, setFName] = useState('');
+
+  useEffect(() => { setMobilePage(0); }, [fCategory, fSubject, fYear, fType, fName]);
 
   // ── Load from Supabase ───────────────────────────────────────────────────
   useEffect(() => {
@@ -99,6 +102,12 @@ export default function App() {
     }
     return true;
   });
+
+  const MOBILE_PAGE_SIZE = 10;
+  const totalPages = Math.ceil(filtered.length / MOBILE_PAGE_SIZE);
+  const safePage = Math.min(mobilePage, Math.max(0, totalPages - 1));
+  const pageStart = safePage * MOBILE_PAGE_SIZE;
+  const mobilePageNotes = filtered.slice(pageStart, pageStart + MOBILE_PAGE_SIZE);
 
   const activeNote = notes.find((n) => n.id === activeId) ?? null;
 
@@ -273,15 +282,56 @@ export default function App() {
               {filtered.length === 0 ? (
                 <p style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 14 }}>No documents found</p>
               ) : (
-                filtered.map((note) => (
-                  <NoteCard
-                    key={note.id}
-                    note={note}
-                    active={activeId === note.id}
-                    onOpen={() => setActiveId(note.id)}
-                    onDownload={(e) => downloadNote(note, e)}
-                  />
-                ))
+                <>
+                  {mobilePageNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      active={activeId === note.id}
+                      onOpen={() => setActiveId(note.id)}
+                      onDownload={(e) => downloadNote(note, e)}
+                    />
+                  ))}
+                  {totalPages > 1 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingBottom: 16 }}>
+                      <button
+                        onClick={() => setMobilePage((p) => Math.max(0, p - 1))}
+                        disabled={safePage === 0}
+                        style={{
+                          padding: '10px 20px',
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 8,
+                          background: 'transparent',
+                          color: safePage === 0 ? C.border : C.muted,
+                          fontSize: 14,
+                          fontWeight: 600,
+                          cursor: safePage === 0 ? 'default' : 'pointer',
+                        }}
+                      >
+                        ← Previous
+                      </button>
+                      <span style={{ fontSize: 13, color: C.muted }}>
+                        {safePage + 1} / {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setMobilePage((p) => Math.min(totalPages - 1, p + 1))}
+                        disabled={safePage === totalPages - 1}
+                        style={{
+                          padding: '10px 20px',
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 8,
+                          background: 'transparent',
+                          color: safePage === totalPages - 1 ? C.border : C.muted,
+                          fontSize: 14,
+                          fontWeight: 600,
+                          cursor: safePage === totalPages - 1 ? 'default' : 'pointer',
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ) : (
