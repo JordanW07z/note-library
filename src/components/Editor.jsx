@@ -114,8 +114,8 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
       borderLeft: `1px solid ${C.border}`,
       display: 'flex',
       flexDirection: 'column',
-      height: isMobile ? '100vh' : '100%',
-      overflowY: isMobile ? 'auto' : 'hidden',
+      height: '100%',
+      overflow: 'hidden',
       transition: 'width 0.2s',
     }}>
       {/* Header */}
@@ -126,10 +126,6 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
         alignItems: 'center',
         gap: 8,
         flexShrink: 0,
-        position: 'sticky',
-        top: 0,
-        background: C.surface,
-        zIndex: 1,
       }}>
         {isAdmin && (
           <button
@@ -218,7 +214,9 @@ export default function Editor({ note, notes, onChange, onDelete, onClose, isAdm
       {/* Body / PDF viewer */}
       {note.isPdf && pdfBlobUrl ? (
         isMobile ? (
-          <MobilePdfViewer blobUrl={pdfBlobUrl} />
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            <MobilePdfViewer blobUrl={pdfBlobUrl} />
+          </div>
         ) : (
           <iframe
             src={pdfBlobUrl}
