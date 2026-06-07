@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { getPdfUrl } from '../db.js';
 import * as pdfjsLib from 'pdfjs-dist';
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const C = {
   bg: '#080E1C',
@@ -31,7 +29,10 @@ function MobilePdfViewer({ blobUrl }) {
     setPages([]);
 
     let cancelled = false;
-    pdfjsLib.getDocument(blobUrl).promise.then(async (pdf) => {
+    fetch(blobUrl)
+      .then((r) => r.arrayBuffer())
+      .then((buf) => pdfjsLib.getDocument({ data: buf }).promise)
+      .then(async (pdf) => {
       const rendered = [];
       const containerWidth = containerRef.current?.offsetWidth || window.innerWidth - 32;
 
@@ -54,7 +55,7 @@ function MobilePdfViewer({ blobUrl }) {
         setPages(rendered);
         setLoading(false);
       }
-    }).catch(() => { if (!cancelled) setLoading(false); });
+    }).catch((err) => { console.error('PDF render error:', err); if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
   }, [blobUrl]);
