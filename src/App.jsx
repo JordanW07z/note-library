@@ -193,10 +193,10 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: C.bg, fontFamily: "'Inter', system-ui, sans-serif", overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: isMobile ? 'auto' : '100vh', minHeight: isMobile ? '100vh' : undefined, background: C.bg, fontFamily: "'Inter', system-ui, sans-serif", overflow: isMobile ? 'visible' : 'hidden' }}>
 
       {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden' }}>
 
         {/* ── Header ── */}
         <div style={{
@@ -276,7 +276,7 @@ export default function App() {
         </div>
 
         {/* ── Table / Cards ── */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflowY: isMobile ? 'visible' : 'auto' }}>
           {isMobile ? (
             <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {filtered.length === 0 ? (
